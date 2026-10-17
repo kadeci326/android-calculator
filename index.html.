@@ -1,0 +1,545 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android Calculator</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --background: #101114;
+    --panel: #1c1d22;
+    --button: #303137;
+    --number: #f5f5f7;
+    --muted: #a9aab3;
+    --accent: #b9f36a;
+    --operator: #3b4631;
+    --text: #ffffff;
+}
+
+body.light {
+    --background: #e9eaf0;
+    --panel: #ffffff;
+    --button: #ececf2;
+    --number: #202127;
+    --muted: #696a75;
+    --accent: #416a19;
+    --operator: #dceacb;
+    --text: #202127;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 18px;
+    transition: background .25s;
+}
+
+.app {
+    width: 100%;
+    max-width: 390px;
+    background: var(--panel);
+    padding: 22px 18px;
+    border-radius: 30px;
+    box-shadow: 0 15px 45px #0005;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    height: 40px;
+    width: 40px;
+    background: var(--accent);
+    color: #17200d;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+h1 {
+    font-size: 17px;
+    margin: 0 0 4px;
+}
+
+.subtitle {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.theme {
+    border: 0;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    background: var(--button);
+    color: var(--number);
+    font-size: 19px;
+    cursor: pointer;
+}
+
+.screen {
+    padding: 15px 5px 20px;
+    text-align: right;
+    min-height: 145px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+}
+
+.expression {
+    color: var(--muted);
+    font-size: 20px;
+    min-height: 30px;
+    overflow-wrap: anywhere;
+}
+
+#display {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: clamp(34px, 10vw, 50px);
+    text-align: right;
+    font-weight: 500;
+    padding: 8px 0;
+}
+
+.tools {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 9px;
+    margin-bottom: 12px;
+}
+
+.tools button {
+    height: 42px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--button);
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.key {
+    height: 65px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--button);
+    color: var(--number);
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform .08s, filter .15s;
+}
+
+.key:active, .tools button:active {
+    transform: scale(.94);
+    filter: brightness(1.2);
+}
+
+.key.operator {
+    background: var(--operator);
+    color: var(--accent);
+}
+
+.key.action {
+    color: var(--accent);
+    font-size: 19px;
+}
+
+.key.equals {
+    background: var(--accent);
+    color: #17200d;
+    font-size: 29px;
+    font-weight: bold;
+}
+
+.footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 19px;
+}
+
+.history {
+    margin-top: 20px;
+    border-top: 1px solid #8883;
+    padding-top: 14px;
+}
+
+.history-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.history-heading button {
+    background: transparent;
+    border: 0;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+#historyList {
+    max-height: 130px;
+    overflow-y: auto;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.history-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #8882;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 360px) {
+    .app {
+        padding: 16px 12px;
+        border-radius: 23px;
+    }
+
+    .key {
+        height: 56px;
+        border-radius: 17px;
+    }
+
+    .keys, .tools {
+        gap: 7px;
+    }
+}
+</style>
+</head>
+
+<body>
+<main class="app">
+
+    <header class="header">
+        <div class="brand">
+            <div class="logo">÷</div>
+            <div>
+                <h1>Calculator</h1>
+                <div class="subtitle">SMART CALCULATOR</div>
+            </div>
+        </div>
+        <button class="theme" onclick="toggleTheme()"
+                aria-label="Switch theme">☼</button>
+    </header>
+
+    <section class="screen">
+        <div class="expression" id="expression"></div>
+        <input id="display" value="0" readonly
+               aria-label="Calculator result">
+    </section>
+
+    <section class="tools">
+        <button onclick="scientific('sqrt')">√x</button>
+        <button onclick="scientific('square')">x²</button>
+        <button onclick="scientific('reciprocal')">1/x</button>
+        <button onclick="scientific('sign')">±</button>
+    </section>
+
+    <section class="keys">
+        <button class="key action" onclick="clearAll()">AC</button>
+        <button class="key action" onclick="deleteLast()">⌫</button>
+        <button class="key action" onclick="percent()">%</button>
+        <button class="key operator" onclick="operator('/')">÷</button>
+
+        <button class="key" onclick="digit('7')">7</button>
+        <button class="key" onclick="digit('8')">8</button>
+        <button class="key" onclick="digit('9')">9</button>
+        <button class="key operator" onclick="operator('*')">×</button>
+
+        <button class="key" onclick="digit('4')">4</button>
+        <button class="key" onclick="digit('5')">5</button>
+        <button class="key" onclick="digit('6')">6</button>
+        <button class="key operator" onclick="operator('-')">−</button>
+
+        <button class="key" onclick="digit('1')">1</button>
+        <button class="key" onclick="digit('2')">2</button>
+        <button class="key" onclick="digit('3')">3</button>
+        <button class="key operator" onclick="operator('+')">+</button>
+
+        <button class="key" onclick="digit('00')">00</button>
+        <button class="key" onclick="digit('0')">0</button>
+        <button class="key" onclick="decimal()">.</button>
+        <button class="key equals" onclick="calculate()">=</button>
+    </section>
+
+    <section class="history">
+        <div class="history-heading">
+            <strong>Recent calculations</strong>
+            <button onclick="clearHistory()">Clear</button>
+        </div>
+        <div id="historyList">No calculations yet</div>
+    </section>
+
+    <div class="footer">Designed for everyday calculations</div>
+
+</main>
+
+<script>
+const display = document.getElementById("display");
+const expressionDisplay = document.getElementById("expression");
+const historyList = document.getElementById("historyList");
+
+let current = "0";
+let stored = null;
+let pending = null;
+let fresh = true;
+let history = [];
+
+function show() {
+    display.value = current;
+}
+
+function format(n) {
+    if (!Number.isFinite(n)) throw new Error("Invalid result");
+    return String(Number(n.toPrecision(12)));
+}
+
+function digit(n) {
+    if (fresh || current === "Error") {
+        current = n === "00" ? "0" : n;
+        fresh = false;
+    } else if (current.replace("-", "").length < 15) {
+        current = current === "0" ? n : current + n;
+    }
+    show();
+}
+
+function decimal() {
+    if (fresh || current === "Error") {
+        current = "0.";
+        fresh = false;
+    } else if (!current.includes(".")) {
+        current += ".";
+    }
+    show();
+}
+
+function operator(op) {
+    const value = Number(current);
+
+    if (current === "Error") return;
+
+    if (pending !== null && !fresh) {
+        const result = perform(stored, value, pending);
+        current = format(result);
+        show();
+    }
+
+    stored = Number(current);
+    pending = op;
+    fresh = true;
+
+    expressionDisplay.textContent =
+        format(stored) + " " + symbol(op);
+
+    show();
+}
+
+function symbol(op) {
+    return ({"+":"+","-":"−","*":"×","/":"÷"})[op] || op;
+}
+
+function perform(a, b, op) {
+    let result;
+
+    switch (op) {
+        case "+": result = a + b; break;
+        case "-": result = a - b; break;
+        case "*": result = a * b; break;
+        case "/":
+            if (b === 0) throw new Error("Cannot divide by zero");
+            result = a / b;
+            break;
+        default: result = b;
+    }
+
+    if (!Number.isFinite(result)) throw new Error("Invalid result");
+    return result;
+}
+
+function calculate() {
+    if (pending === null || fresh) return;
+
+    const a = stored;
+    const b = Number(current);
+    const op = pending;
+
+    try {
+        const result = perform(a, b, op);
+        const answer = format(result);
+
+        addHistory(
+            format(a) + " " + symbol(op) + " " +
+            format(b) + " = " + answer
+        );
+
+        expressionDisplay.textContent =
+            format(a) + " " + symbol(op) + " " + format(b) + " =";
+
+        current = answer;
+        stored = null;
+        pending = null;
+        fresh = true;
+        show();
+    } catch (error) {
+        current = "Error";
+        stored = null;
+        pending = null;
+        fresh = true;
+        expressionDisplay.textContent = error.message;
+        show();
+    }
+}
+
+function clearAll() {
+    current = "0";
+    stored = null;
+    pending = null;
+    fresh = true;
+    expressionDisplay.textContent = "";
+    show();
+}
+
+function deleteLast() {
+    if (fresh || current === "Error") {
+        clearAll();
+        return;
+    }
+
+    current = current.length > 1 ? current.slice(0, -1) : "0";
+
+    if (current === "-") current = "0";
+
+    show();
+}
+
+function scientific(type) {
+    const n = Number(current);
+    let result;
+
+    try {
+        switch (type) {
+            case "sqrt":
+                if (n < 0) throw new Error("Invalid square root");
+                result = Math.sqrt(n);
+                break;
+            case "square":
+                result = n * n;
+                break;
+            case "reciprocal":
+                if (n === 0) throw new Error("Cannot divide by zero");
+                result = 1 / n;
+                break;
+            case "sign":
+                result = -n;
+                break;
+        }
+
+        expressionDisplay.textContent = type.toUpperCase() +
+            "(" + current + ") =";
+
+        current = format(result);
+        fresh = true;
+        show();
+    } catch (error) {
+        current = "Error";
+        expressionDisplay.textContent = error.message;
+        fresh = true;
+        show();
+    }
+}
+
+function percent() {
+    current = format(Number(current) / 100);
+    fresh = true;
+    show();
+}
+
+function addHistory(item) {
+    history.unshift(item);
+    history = history.slice(0, 10);
+    renderHistory();
+}
+
+function renderHistory() {
+    historyList.replaceChildren();
+
+    if (!history.length) {
+        historyList.textContent = "No calculations yet";
+        return;
+    }
+
+    history.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "history-item";
+        row.textContent = item;
+        historyList.appendChild(row);
+    });
+}
+
+function clearHistory() {
+    history = [];
+    renderHistory();
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("light");
+}
+
+document.addEventListener("keydown", function(event) {
+    if (/^[0-9]$/.test(event.key)) digit(event.key);
+    else if (event.key === ".") decimal();
+    else if (["+", "-", "*", "/"].includes(event.key)) operator(event.key);
+    else if (event.key === "Enter" || event.key === "=") calculate();
+    else if (event.key === "Backspace") deleteLast();
+    else if (event.key === "Escape") clearAll();
+    else return;
+
+    event.preventDefault();
+});
+
+show();
+renderHistory();
+</script>
+
+</body>
+</html>
